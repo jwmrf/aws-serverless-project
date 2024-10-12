@@ -1,0 +1,101 @@
+app: product-service
+service: product-service
+
+frameworkVersion: "3"
+
+stages:
+  dev:
+    params:
+      tableName: "products"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  profile: default
+  region: us-east-1
+  stage: dev
+  memorySize: 1024
+  timeout: 10
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+    TABLE_NAME: ${self:stages.dev.params.tableName}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - 'dynamodb:BatchGetItem'
+            - 'dynamodb:GetItem'
+            - 'dynamodb:Query'
+            - 'dynamodb:Scan'
+            - 'dynamodb:BatchWriteItem'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:UpdateItem'
+          Resource: 'arn:aws:dynamodb:us-east-1:980921757679:table/products'
+
+custom:
+  tableName: ${self:provider.environment.TABLE_NAME}
+  dynamodb:
+    - dev
+  start:
+    port: 8000
+    inMemory: true
+    migrate: true
+    seed: false
+plugins:
+  - serverless-esbuild
+
+resources:
+  Resources:
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:stages.dev.params.tableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+functions:
+  createProduct:
+    handler: src/infra/database/dynamodb/lambdas/create-product.handler
+    events:
+      - http:
+          method: post
+          path: /products
+          integration: lambda-proxy
+
+  updateProduct:
+    handler: src/infra/database/dynamodb/lambdas/update-product.handler
+    events:
+      - http:
+          method: put
+          path: /products
+          integration: lambda-proxy
+
+  listProducts:
+    handler: src/infra/database/dynamodb/lambdas/list-product.handler
+    events:
+      - http:
+          method: get
+          path: /products
+          integration: lambda-proxy
+
+  deleteProduct:
+    handler: src/infra/database/dynamodb/lambdas/delete-product.handler
+    events:
+      - http:
+          method: delete
+          path: /products/{id}
+          integration: lambda-proxy
+
+  getProduct:
+    handler: src/infra/database/dynamodb/lambdas/get-product.handler
+    events:
+      - http:
+          method: get
+          path: /products/{id}
+          integration: lambda-proxy
