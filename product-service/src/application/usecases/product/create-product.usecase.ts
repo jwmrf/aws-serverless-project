@@ -8,6 +8,5 @@ export class CreateProductUseCase implements CreateProductUseCaseContract {
     ) {}
     async execute(data: InputCreateProductDto): Promise<void> {
         await this.productRepositoryContract.create(data);
-        console.log(data);
     }
 }

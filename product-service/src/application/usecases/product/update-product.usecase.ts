@@ -8,6 +8,5 @@ export class UpdateProductUseCase implements UpdateProductUseCaseContract {
     ) {}
     async execute(data: InputUpdateProductDto): Promise<void> {
         await this.productRepositoryContract.update(data);
-        console.log(data);
     }
 }
