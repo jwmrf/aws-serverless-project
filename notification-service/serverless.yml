@@ -1,0 +1,44 @@
+app: notification-service
+service: notification-service
+
+frameworkVersion: "3"
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-esbuild
+
+custom:
+  dotenv:
+    path: ./.env
+    
+provider:
+  name: aws
+  runtime: nodejs20.x
+  profile: default
+  region: us-east-1
+  stage: dev
+  environment:
+    BREVO_API_KEY: "${env:BREVO_API_KEY}"
+    BREVO_API_URL: "${env:BREVO_API_URL}"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - 'sqs:ReceiveMessage'
+            - 'sqs:DeleteMessage'
+            - 'sqs:GetQueueAttributes'
+          Resource:
+            - 'arn:aws:sqs:us-east-1:980921757679:notification-queue'
+functions:
+  sendEmailNotification:
+    handler: src/infra/lambdas/send-email-notification.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [NotificationQueue, Arn]
+resources:
+  Resources:
+    NotificationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: notification-queue
