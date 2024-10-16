@@ -19,3 +19,4 @@
 */
 
 import './routes/cart'
+import './routes/customer'
