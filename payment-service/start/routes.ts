@@ -20,3 +20,4 @@
 
 import './routes/cart'
 import './routes/customer'
+import './routes/order'
