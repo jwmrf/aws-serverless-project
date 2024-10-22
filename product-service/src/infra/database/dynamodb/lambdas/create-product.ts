@@ -18,11 +18,11 @@ export const handler: APIGatewayProxyHandler = async (event, _context): Promise<
         }
         const product = new Product(
             body.name,
-            body.price,
             body.description,
+            body.salePrice || 0,
+            body.costPrice || 0,
             body.quantity || 1,
-            body.deliveryPrice || 0,
-            body.costPrice || 0
+            body.deliveryPrice || 0
         )
         await createProductUseCase.execute(product)
 

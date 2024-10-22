@@ -1,6 +1,7 @@
-import { DynamoDBClient, QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, GetCommand, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, GetCommand, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Product } from "src/domain/entities/product";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { ProductRepositoryContract } from "src/domain/usecases/product/repositories/product/product.repository.contract";
 
 export class ProductDynamoRepository implements ProductRepositoryContract {
@@ -17,7 +18,7 @@ export class ProductDynamoRepository implements ProductRepositoryContract {
             TableName: this.tableName,
             Item: product,
         } as PutCommandInput
-
+        
         const command = new PutCommand(params);
         
         await this.client.send(command);
@@ -63,7 +64,11 @@ export class ProductDynamoRepository implements ProductRepositoryContract {
 
         const response = await this.client.send(command);
 
-        return response.Items as unknown as Product[]
+        const products = response.Items?.map(item => {
+            return unmarshall(item)
+        }) as Product[]
+
+        return products
     }
 
     async get(id: string): Promise<Product> {
