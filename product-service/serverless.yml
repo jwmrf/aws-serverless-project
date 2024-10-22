@@ -8,6 +8,23 @@ stages:
     params:
       tableName: "products"
 
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-esbuild
+  
+custom:
+  dotenv:
+    path: ./.env
+
+  tableName: ${self:provider.environment.TABLE_NAME}
+  dynamodb:
+    - dev
+  start:
+    port: 8000
+    inMemory: true
+    migrate: true
+    seed: false
+
 provider:
   name: aws
   runtime: nodejs20.x
@@ -19,6 +36,7 @@ provider:
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
     TABLE_NAME: ${self:stages.dev.params.tableName}
+    AUTH_TOKEN: "${env:AUTH_TOKEN}"
   iam:
     role:
       statements:
@@ -32,18 +50,6 @@ provider:
             - 'dynamodb:PutItem'
             - 'dynamodb:UpdateItem'
           Resource: 'arn:aws:dynamodb:us-east-1:980921757679:table/products'
-
-custom:
-  tableName: ${self:provider.environment.TABLE_NAME}
-  dynamodb:
-    - dev
-  start:
-    port: 8000
-    inMemory: true
-    migrate: true
-    seed: false
-plugins:
-  - serverless-esbuild
 
 resources:
   Resources:
@@ -67,6 +73,11 @@ functions:
           method: post
           path: /products
           integration: lambda-proxy
+          authorizer: 
+            name: authorizerFunc # Nome da função Lambda do authorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Authorization
+            type: token
 
   updateProduct:
     handler: src/infra/database/dynamodb/lambdas/update-product.handler
@@ -75,6 +86,11 @@ functions:
           method: put
           path: /products
           integration: lambda-proxy
+          authorizer: 
+            name: authorizerFunc # Nome da função Lambda do authorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Authorization
+            type: token
 
   listProducts:
     handler: src/infra/database/dynamodb/lambdas/list-product.handler
@@ -91,6 +107,11 @@ functions:
           method: delete
           path: /products/{id}
           integration: lambda-proxy
+          authorizer: 
+            name: authorizerFunc # Nome da função Lambda do authorizer
+            resultTtlInSeconds: 300
+            identitySource: method.request.header.Authorization
+            type: token
 
   getProduct:
     handler: src/infra/database/dynamodb/lambdas/get-product.handler
@@ -99,3 +120,6 @@ functions:
           method: get
           path: /products/{id}
           integration: lambda-proxy
+            
+  authorizerFunc:
+    handler: src/infra/database/dynamodb/lambdas/authorizer.handler
