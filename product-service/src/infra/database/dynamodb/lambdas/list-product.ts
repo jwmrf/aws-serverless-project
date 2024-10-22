@@ -9,7 +9,12 @@ export const handler: APIGatewayProxyHandler = async (event, _context): Promise<
         const products = await listProductUseCase.execute()
         return {
             statusCode: 200,
-            body: JSON.stringify(products)
+            body: JSON.stringify(products),
+            headers: {
+                'Access-Control-Allow-Origin': '*', // Or specify your domain
+                'Access-Control-Allow-Credentials': true, // If you need to send cookies or authentication
+                // Other headers
+              },
         }
     } catch (error) {
         console.error(error)

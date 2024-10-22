@@ -11,7 +11,7 @@ stages:
 plugins:
   - serverless-dotenv-plugin
   - serverless-esbuild
-  
+
 custom:
   dotenv:
     path: ./.env
@@ -99,6 +99,16 @@ functions:
           method: get
           path: /products
           integration: lambda-proxy
+          cors:
+            origin: 'http://localhost:3002'  # Define a origem permitida (no seu caso, localhost)
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: true
 
   deleteProduct:
     handler: src/infra/database/dynamodb/lambdas/delete-product.handler
